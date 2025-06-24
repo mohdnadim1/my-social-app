@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaceClone - Social Feed with Friends</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Use the Inter font family defined above */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Facebook-like light grey */
+        }
+        .dark body {
+            background-color: #18191a;
+        }
+        /* Custom scrollbar for a more modern look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        .dark ::-webkit-scrollbar-track { background: #2d3748; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4a5568; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        /* Simple fade-in animation */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-20">
+        <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+            <!-- LOGO: The h1 tag has been replaced with this div containing the new logo -->
+            <div class="flex items-center gap-3">
+                <!-- 
+                  This is a custom SVG logo. To use your own image file, 
+                  you would first need to upload your logo to an image hosting service to get a URL.
+                  Then, you could replace this entire <svg> block with an <img> tag like this:
+                  <img src="YOUR_LOGO_URL_HERE" alt="FaceClone Logo" class="h-9 w-9">
+                -->
+                <svg class="h-9 w-9 text-blue-600 dark:text-blue-500" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FaceClone Logo">
+                  <path d="M2,12C2,6.477,6.477,2,12,2s10,4.477,10,10c0,4.1,-2.469,7.625,-6,9.158V23l-2.812,-2.343C12.8,20.91,12.4,21,12,21c-5.523,0,-10,-4.477,-10,-9Z"></path>
+                  <path d="M9.5,9.5 A1.5,1.5 0 0,1 8,11 V14 H6.5 V11 A3,3 0 0,1 9.5,8 H11 V9.5 H9.5Z" fill="white"></path>
+                  <path d="M16.5,9.5 A1.5,1.5 0 0,1 15,11 V14 H13.5 V11 A3,3 0 0,1 16.5,8 H18 V9.5 H16.5Z" fill="white"></path>
+                  <path d="M8,16 C10,17.5 14,17.5 16,16" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"></path>
+                </svg>
+                <span class="text-2xl font-bold text-gray-800 dark:text-gray-200 hidden sm:inline">FaceClone</span>
+            </div>
+            <div id="auth-status" class="text-xs text-gray-500 dark:text-gray-400 text-right">
+                <p>Connecting...</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="container mx-auto p-4 lg:p-6 grid grid-cols-12 gap-6">
+
+        <!-- Left Navigation -->
+        <aside class="hidden lg:block lg:col-span-3 sticky top-20 self-start">
+            <nav class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#" id="nav-feed" class="flex items-center p-3 text-base font-normal text-gray-900 rounded-lg dark:text-white bg-gray-200 dark:bg-gray-700">
+                            <i class="fas fa-newspaper w-6 h-6 text-blue-500"></i>
+                            <span class="ml-3">Feed</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-friends" class="flex items-center p-3 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <i class="fas fa-users w-6 h-6 text-green-500"></i>
+                            <span class="ml-3">Friends</span>
+                        </a>
+                    </li>
+                     <li>
+                        <div id="user-id-display" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 break-words">
+                            <!-- User ID will be inserted here -->
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Center Column -->
+        <main class="col-span-12 lg:col-span-9 xl:col-span-6">
+            <!-- Feed View -->
+            <div id="view-feed">
+                <!-- Post Creation Box -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6">
+                    <textarea id="post-content" class="w-full p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="What's on your mind?"></textarea>
+                    <div class="flex justify-end mt-3">
+                        <button id="submit-post-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Post</button>
+                    </div>
+                </div>
+                <!-- Posts Feed -->
+                <div id="posts-feed" class="space-y-6">
+                     <div id="loading-indicator" class="text-center p-8"><i class="fas fa-spinner fa-spin fa-3x text-gray-400"></i><p class="mt-2 text-gray-500">Loading posts...</p></div>
+                </div>
+            </div>
+            <!-- Friends View -->
+            <div id="view-friends" class="hidden space-y-6">
+                 <!-- Friend Requests -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4">Friend Requests</h2>
+                    <div id="friend-requests-list" class="space-y-3">
+                        <p class="text-gray-500">No new requests.</p>
+                    </div>
+                </div>
+                 <!-- All Users to Add -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                    <h2 class="text-xl font-bold mb-4">Find Friends</h2>
+                    <div id="all-users-list" class="space-y-3">
+                        <p class="text-gray-500">Loading users...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Column (Friend List) -->
+        <aside class="hidden xl:block xl:col-span-3 sticky top-20 self-start">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <h3 class="font-bold text-lg mb-4">Your Friends</h3>
+                <div id="friends-list" class="space-y-3">
+                    <p class="text-gray-500">You don't have any friends yet.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, query, onSnapshot, serverTimestamp, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 1. CONFIG & INITIALIZATION ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Firestore Collection References
+        const postsCollectionRef = collection(db, `artifacts/${appId}/public/data/posts`);
+        const usersCollectionRef = collection(db, `artifacts/${appId}/public/data/users`);
+
+        // --- 2. GLOBAL STATE & DOM REFS ---
+        let currentUserId = null;
+        let currentUserData = null;
+        let unsubscribePosts = null;
+        let unsubscribeUsers = null;
+
+        const el = {
+            authStatus: document.getElementById('auth-status'),
+            userIdDisplay: document.getElementById('user-id-display'),
+            postContent: document.getElementById('post-content'),
+            submitPostBtn: document.getElementById('submit-post-btn'),
+            postsFeed: document.getElementById('posts-feed'),
+            loadingIndicator: document.getElementById('loading-indicator'),
+            viewFeed: document.getElementById('view-feed'),
+            viewFriends: document.getElementById('view-friends'),
+            navFeed: document.getElementById('nav-feed'),
+            navFriends: document.getElementById('nav-friends'),
+            friendRequestsList: document.getElementById('friend-requests-list'),
+            allUsersList: document.getElementById('all-users-list'),
+            friendsList: document.getElementById('friends-list'),
+        };
+
+        // --- 3. AUTHENTICATION & USER SETUP ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                el.authStatus.innerHTML = `<p class="text-green-500">Connected</p>`;
+                el.userIdDisplay.innerHTML = `<p class="text-xs text-gray-500 dark:text-gray-400">Your User ID:</p><p class="font-mono text-xs text-blue-500">${currentUserId}</p>`;
+                console.log("Authenticated with User ID:", currentUserId);
+                await setupUser();
+                attachListeners();
+            } else {
+                currentUserId = null;
+                el.authStatus.innerHTML = `<p class="text-red-500">Disconnected</p>`;
+                console.log("User is not authenticated.");
+                if (unsubscribePosts) unsubscribePosts();
+                if (unsubscribeUsers) unsubscribeUsers();
+            }
+        });
+
+        signInAnonymously(auth).catch(err => console.error("Anonymous sign-in failed:", err));
+
+        async function setupUser() {
+            const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUserId);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) {
+                await setDoc(userRef, {
+                    uid: currentUserId,
+                    createdAt: serverTimestamp(),
+                    friends: [],
+                    friendRequests: []
+                });
+                console.log("Created new user profile.");
+            }
+        }
+
+        // --- 4. VIEW MANAGEMENT & NAVIGATION ---
+        function showView(viewName) {
+            el.viewFeed.classList.add('hidden');
+            el.viewFriends.classList.add('hidden');
+            el.navFeed.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+            el.navFriends.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+
+            if (viewName === 'feed') {
+                el.viewFeed.classList.remove('hidden');
+                el.navFeed.classList.add('bg-gray-200', 'dark:bg-gray-700');
+            } else if (viewName === 'friends') {
+                el.viewFriends.classList.remove('hidden');
+                el.navFriends.classList.add('bg-gray-200', 'dark:bg-gray-700');
+            }
+        }
+
+        el.navFeed.addEventListener('click', (e) => { e.preventDefault(); showView('feed'); });
+        el.navFriends.addEventListener('click', (e) => { e.preventDefault(); showView('friends'); });
+
+        // --- 5. CORE EVENT LISTENERS ---
+        el.submitPostBtn.addEventListener('click', handlePostSubmit);
+        // Event delegation for dynamically created buttons
+        document.body.addEventListener('click', handleDynamicClicks);
+        
+        // --- 6. REAL-TIME LISTENERS ---
+        function attachListeners() {
+            if (unsubscribePosts) unsubscribePosts();
+            if (unsubscribeUsers) unsubscribeUsers();
+            
+            // Listener for posts
+            const postsQuery = query(postsCollectionRef);
+            unsubscribePosts = onSnapshot(postsQuery, snapshot => {
+                el.loadingIndicator.style.display = 'none';
+                const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                posts.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+                renderPosts(posts);
+            }, err => console.error("Error listening to posts:", err));
+
+            // Listener for all users (for friends page)
+            const usersQuery = query(usersCollectionRef);
+            unsubscribeUsers = onSnapshot(usersQuery, snapshot => {
+                const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                currentUserData = allUsers.find(u => u.id === currentUserId);
+                if (currentUserData) {
+                    renderFriendRequests(allUsers);
+                    renderAllUsers(allUsers);
+                    renderFriendsList(allUsers);
+                }
+            }, err => console.error("Error listening to users:", err));
+        }
+
+        // --- 7. RENDERING FUNCTIONS ---
+        function renderPosts(posts) {
+            el.postsFeed.innerHTML = '';
+            if (posts.length === 0) {
+                el.postsFeed.innerHTML = `<div class="text-center p-8 text-gray-500"><i class="fa-solid fa-comments fa-3x"></i><p class="mt-2">No posts yet. Be the first!</p></div>`;
+                return;
+            }
+            posts.forEach(post => {
+                const postEl = document.createElement('div');
+                postEl.className = 'bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md animate-fade-in';
+                const isMyPost = post.authorId === currentUserId;
+                const authorDisplayName = isMyPost ? "You" : `User: ...${post.authorId.slice(-6)}`;
+                const authorColor = isMyPost ? 'text-green-500' : 'text-blue-400';
+                const date = post.createdAt ? post.createdAt.toDate().toLocaleString() : 'Just now';
+
+                const likes = post.likes || [];
+                const hasLiked = likes.includes(currentUserId);
+                const likeBtnClass = hasLiked ? 'text-blue-600 font-bold' : 'hover:text-blue-500';
+                
+                postEl.innerHTML = `
+                    <div class="flex items-center mb-3">
+                        <div class="w-10 h-10 rounded-full ${authorColor.replace('text-','bg-')} flex items-center justify-center text-white font-bold"><i class="fa-solid fa-user"></i></div>
+                        <div class="ml-3">
+                            <p class="font-semibold ${authorColor}">${authorDisplayName}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${date}</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-800 dark:text-gray-300 whitespace-pre-wrap break-words">${escapeHTML(post.text)}</p>
+                    <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-around text-gray-500 dark:text-gray-400">
+                        <button class="like-btn ${likeBtnClass}" data-post-id="${post.id}">
+                            <i class="fa-solid fa-thumbs-up mr-2"></i>Like (${likes.length})
+                        </button>
+                        <button class="hover:text-blue-500" disabled><i class="fa-regular fa-comment mr-2"></i>Comment</button>
+                        <button class="hover:text-blue-500" disabled><i class="fa-solid fa-share mr-2"></i>Share</button>
+                    </div>`;
+                el.postsFeed.appendChild(postEl);
+            });
+        }
+        
+        function renderFriendRequests(allUsers) {
+            if (!currentUserData?.friendRequests?.length) {
+                el.friendRequestsList.innerHTML = `<p class="text-gray-500">No new requests.</p>`;
+                return;
+            }
+            el.friendRequestsList.innerHTML = '';
+            currentUserData.friendRequests.forEach(requestUid => {
+                const user = allUsers.find(u => u.id === requestUid);
+                if (user) {
+                    const reqEl = document.createElement('div');
+                    reqEl.className = 'flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-700';
+                    reqEl.innerHTML = `
+                        <span>User: ...${user.id.slice(-6)}</span>
+                        <div>
+                            <button class="accept-friend-btn bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600" data-uid="${user.id}">Accept</button>
+                            <button class="decline-friend-btn bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 ml-2" data-uid="${user.id}">Decline</button>
+                        </div>`;
+                    el.friendRequestsList.appendChild(reqEl);
+                }
+            });
+        }
+
+        function renderAllUsers(allUsers) {
+             const potentialFriends = allUsers.filter(user => 
+                user.id !== currentUserId &&
+                !currentUserData?.friends?.includes(user.id) &&
+                !currentUserData?.friendRequests?.includes(user.id)
+            );
+
+            if (!potentialFriends.length) {
+                el.allUsersList.innerHTML = `<p class="text-gray-500">No new users to add.</p>`;
+                return;
+            }
+
+            el.allUsersList.innerHTML = '';
+            potentialFriends.forEach(user => {
+                const userEl = document.createElement('div');
+                userEl.className = 'flex items-center justify-between p-2';
+                userEl.innerHTML = `
+                    <span>User: ...${user.id.slice(-6)}</span>
+                    <button class="add-friend-btn bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600" data-uid="${user.id}">Add Friend</button>`;
+                el.allUsersList.appendChild(userEl);
+            });
+        }
+        
+        function renderFriendsList(allUsers) {
+            if (!currentUserData?.friends?.length) {
+                el.friendsList.innerHTML = `<p class="text-gray-500">You don't have any friends yet.</p>`;
+                return;
+            }
+            el.friendsList.innerHTML = '';
+             currentUserData.friends.forEach(friendId => {
+                const friend = allUsers.find(u => u.id === friendId);
+                if (friend) {
+                    const friendEl = document.createElement('div');
+                    friendEl.className = 'flex items-center space-x-3';
+                    friendEl.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white"><i class="fa-solid fa-user-check"></i></div>
+                        <span>User: ...${friend.id.slice(-6)}</span>`;
+                    el.friendsList.appendChild(friendEl);
+                }
+             });
+        }
+
+        // --- 8. ACTION HANDLERS ---
+        async function handlePostSubmit() {
+            const postText = el.postContent.value.trim();
+            if (!postText || !currentUserId) return;
+            el.submitPostBtn.disabled = true;
+            el.submitPostBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            try {
+                await addDoc(postsCollectionRef, {
+                    text: postText,
+                    authorId: currentUserId,
+                    createdAt: serverTimestamp(),
+                    likes: []
+                });
+                el.postContent.value = '';
+            } catch (error) {
+                console.error("Error creating post: ", error);
+            } finally {
+                el.submitPostBtn.disabled = false;
+                el.submitPostBtn.innerHTML = 'Post';
+            }
+        }
+
+        async function handleDynamicClicks(e) {
+            if (e.target.closest('.like-btn')) handleLike(e.target.closest('.like-btn'));
+            if (e.target.closest('.add-friend-btn')) handleAddFriend(e.target.closest('.add-friend-btn'));
+            if (e.target.closest('.accept-friend-btn')) handleAcceptFriend(e.target.closest('.accept-friend-btn'));
+            if (e.target.closest('.decline-friend-btn')) handleDeclineFriend(e.target.closest('.decline-friend-btn'));
+        }
+
+        async function handleLike(button) {
+            const postId = button.dataset.postId;
+            if (!postId || !currentUserId) return;
+            const postRef = doc(db, `artifacts/${appId}/public/data/posts`, postId);
+            const postSnap = await getDoc(postRef);
+            if (!postSnap.exists()) return;
+
+            const postLikes = postSnap.data().likes || [];
+            if (postLikes.includes(currentUserId)) {
+                await updateDoc(postRef, { likes: arrayRemove(currentUserId) });
+            } else {
+                await updateDoc(postRef, { likes: arrayUnion(currentUserId) });
+            }
+        }
+        
+        async function handleAddFriend(button) {
+            const uid = button.dataset.uid;
+            if (!uid || !currentUserId || uid === currentUserId) return;
+            const targetUserRef = doc(db, `artifacts/${appId}/public/data/users`, uid);
+            button.disabled = true;
+            button.textContent = "Sent";
+            await updateDoc(targetUserRef, { friendRequests: arrayUnion(currentUserId) });
+        }
+
+        async function handleAcceptFriend(button) {
+            const uid = button.dataset.uid;
+            if (!uid || !currentUserId) return;
+            button.disabled = true;
+            
+            const currentUserRef = doc(db, `artifacts/${appId}/public/data/users`, currentUserId);
+            const newFriendRef = doc(db, `artifacts/${appId}/public/data/users`, uid);
+
+            const batch = writeBatch(db);
+            // Add to each other's friends list
+            batch.update(currentUserRef, { friends: arrayUnion(uid), friendRequests: arrayRemove(uid) });
+            batch.update(newFriendRef, { friends: arrayUnion(currentUserId) });
+            await batch.commit();
+        }
+
+        async function handleDeclineFriend(button) {
+            const uid = button.dataset.uid;
+             if (!uid || !currentUserId) return;
+            button.disabled = true;
+            const currentUserRef = doc(db, `artifacts/${appId}/public/data/users`, currentUserId);
+            await updateDoc(currentUserRef, { friendRequests: arrayRemove(uid) });
+        }
+
+        // --- 9. UTILITY ---
+        function escapeHTML(str) {
+            const p = document.createElement('p');
+            p.appendChild(document.createTextNode(str));
+            return p.innerHTML;
+        }
+
+    </script>
+</body>
+</html>
